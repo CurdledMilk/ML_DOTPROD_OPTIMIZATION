@@ -1,4 +1,5 @@
 just do cargo run and it will show you the benchmarks.... :(
 
 
-YES I KNOW THE USECASE IS SMALL. YES I KNOW THIS SHORTCUT ONLY WORKS ON HIDDEN LAYERS THAT USE RELU.
+yes i know the usecase is small. yes i know this shortcut only works on hidden layers that use relu.
+yes it might not even be faster on gpu....
