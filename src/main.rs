@@ -1,50 +1,67 @@
-use rand::Rng;
+use ndarray::Array2;
+use ndarray_rand::rand_distr::Uniform;
+use ndarray_rand::RandomExt;
+use sprs::TriMat;
+use std::time::Instant;
+
 fn main() {
-    //This will simulate a single hidden layer
+    let n = 5000;
     let mut rng = rand::thread_rng();
-    let mut activation_in = vec![1.0;100]; //100 activations
-    let mut activation_out = vec![0.0;100]; //100 activations
-    let mut weights = vec![1.0;100 * 100]; //100 * 100 activations
 
-    for i in 0..100{ //fill activations with random stuff
-        activation_in[i] = rng.gen_range(-1.0..1.0);
-    }
-    for i in 0..(100 * 100){ //fill weights with random stuff
-        weights[i] = rng.gen_range(-(1.0/100.0)..(1.0/100.0)); // divide by 100 for norm
-    }
+    // Initialize matrices
+    let activation_in = Array2::random_using((1, n), Uniform::new(-1.0, 1.0), &mut rng);
+    let weights = Array2::random_using((n, n), Uniform::new(-0.01, 0.01), &mut rng);
 
-    use std::time::Instant;
-    let now = Instant::now();
-    //THE NORMAL ALGORITHM
-    //Starting from the part where we just got done doing the
-    //dot product in the layer before this one and havent activation functin yet
-
-    for i in 0..100{ //for every activation
-        if activation_in[i] < 0.0{
-            activation_in[i] = 0.0;
+    // Measure naive loop algorithm
+    let naive_now = Instant::now();
+    let mut activation_out = Array2::<f64>::zeros((1, n));
+    for i in 0..n {
+        for j in 0..n {
+            activation_out[[0, j]] += activation_in[[0, i]] * weights[[i, j]];
         }
     }
+    println!("Elapsed: {:.2?}, Naive Loop Algorithm", naive_now.elapsed());
 
-    for i in 0..100{ //for every activation
-        for j in 0..100{ //for every output activation of this hidden layer
-            activation_out[j] += activation_in[i] * weights[j + i * 100];
-        }
-    }
-
-    let elapsed = now.elapsed();
-    println!("Elapsed: {:.2?}, THIS IS NORMAL ALGO", elapsed);
-
-
-
-    let now2 = Instant::now();
-    //MY ALGORITHM
-    for i in 0..100{ //for every activation
-        if activation_in[i] > 0.0{
-            for j in 0..100{ //for every output activation of this hidden layer
-                activation_out[j] += activation_in[i] * weights[j + i * 100];
+    // Measure naive loop algorithm with skipping logic
+    let klutzy_now = Instant::now();
+    let mut activation_out = Array2::<f64>::zeros((1, n));
+    for i in 0..n {
+        if activation_in[[0, i]] > 0.0 {
+            for j in 0..n {
+                activation_out[[0, j]] += activation_in[[0, i]] * weights[[i, j]];
             }
-        } 
+        }
     }
-    let elapsed2 = now2.elapsed();
-    println!("Elapsed: {:.2?}, THIS IS my ALGO", elapsed2);
+    println!("Elapsed: {:.2?}, Naive Loop w/ Skip Algorithm", klutzy_now.elapsed());
+
+    // Measure vectorized algorithm
+    let marr75_now = Instant::now();
+    let relu_activation_in = activation_in.mapv(|a| if a < 0.0 { 0.0 } else { a });
+    let _optimized_activation_out = relu_activation_in.dot(&weights);
+    println!("Elapsed: {:.2?}, Vectorized Algorithm", marr75_now.elapsed());
+
+    // Convert the dense matrix to a sparse matrix using sprs
+    let mut triplet = TriMat::new((n, n));
+    for i in 0..n {
+        for j in 0..n {
+            let val = weights[[i, j]];
+            if val != 0.0 {
+                triplet.add_triplet(i, j, val);
+            }
+        }
+    }
+    let sparse_weights = triplet.to_csr::<usize>();
+
+    // Measure sparse matrix algorithm
+    let sparse_now = Instant::now();
+    let relu_activation_in = activation_in.mapv(|a| if a < 0.0 { 0.0 } else { a });
+    let mut sparse_activation_out = vec![0.0; n];
+    for i in 0..n {
+        if activation_in[[0, i]] > 0.0 {
+            for (j, &val) in sparse_weights.outer_view(i).unwrap().iter() {
+                sparse_activation_out[j] += relu_activation_in[[0, i]] * val;
+            }
+        }
+    }
+    println!("Elapsed: {:.2?}, Sparse Matrix Algorithm", sparse_now.elapsed());
 }
