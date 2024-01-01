@@ -63,9 +63,3 @@ fn main() {
     }
     println!("Elapsed: {:.2?}, Sparse Matrix Algorithm", sparse_now.elapsed());
 }
-
-// On my machine:
-// Elapsed: 2.28s, Naive Loop Algorithm
-// Elapsed: 1.15s, Naive Loop w/ Skip Algorithm
-// Elapsed: 590.39ms, Vectorized Algorithm
-// Elapsed: 528.96ms, Sparse Matrix Algorithm
