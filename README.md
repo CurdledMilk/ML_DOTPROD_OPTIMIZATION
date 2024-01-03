@@ -10,3 +10,6 @@ In a sample run for a 5000x5000 matrix:
 2. Elapsed: 1.16s, Naive Loop w/ Skip Algorithm
 3. Elapsed: 587.05ms, Vectorized Algorithm
 4. Elapsed: 509.66ms, Sparse Matrix Algorithm
+
+
+and it also runs my superier algorith lmao
