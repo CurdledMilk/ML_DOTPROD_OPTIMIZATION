@@ -64,4 +64,29 @@ fn main() {
         }
     }
     println!("Elapsed: {:.2?}, Sparse Matrix Algorithm", sparse_now.elapsed());
+
+    //RUST compiler automatically vectorizes loops dummy get off your high horse lmao
+    use rand::Rng;
+    let mut rng = rand::thread_rng();
+    let mut act_in = vec![1.0;n]; //n activations
+    let mut act_out = vec![0.0;n]; //n activations
+    let mut w = vec![1.0;n * n]; //n * n activations
+
+    for i in 0..n{ //fill activations with random stuff
+        act_in[i] = rng.gen_range(-1.0..1.0);
+    }
+    for i in 0..(n * n){ //fill weights with random stuff
+        w[i] = rng.gen_range(-(1.0/(n as f64))..(1.0/(n as f64))); // divide by n for norm
+    }
+    let now2 = Instant::now();
+    //MY ALGORITHM
+    for i in 0..n{ //for every activation
+        if act_in[i] > 0.0{
+            for j in 0..n{ //for every output activation of this hidden layer
+                act_out[j] += act_in[i] * w[j + i * n];
+            }
+        } 
+    }
+    let elapsed2 = now2.elapsed();
+    println!("Elapsed: {:.2?}, THIS IS my old ALGO before some guy ruined it", elapsed2);
 }
