@@ -4,9 +4,12 @@ Compares 4 algorithms for dot product:
 2. Klutzy's naive for loop with conditional algorithm
 3. marr75's vectorized algorithm
 4. marr75's sparse matrix vectorized algorithm
+5. Klutzy's naive for loop with conditional algorithm (again)
 
 In a sample run for a 5000x5000 matrix:
-1. Elapsed: 2.33s, Naive Loop Algorithm
-2. Elapsed: 1.16s, Naive Loop w/ Skip Algorithm
-3. Elapsed: 587.05ms, Vectorized Algorithm
-4. Elapsed: 509.66ms, Sparse Matrix Algorithm
+Elapsed: 1.61s, Naive Loop Algorithm
+Elapsed: 809.08ms, Naive Loop w/ Skip Algorithm
+Elapsed: 967.55ms, Vectorized Algorithm
+Elapsed: 463.42ms, Sparse Matrix Algorithm
+Elapsed: 808.02ms, THIS IS my old ALGO before some guy ruined it
+
