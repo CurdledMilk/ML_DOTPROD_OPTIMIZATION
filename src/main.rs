@@ -1,34 +1,34 @@
-use ndarray::Array2;
+use ndarray::{Array, Array2};
 use ndarray_rand::rand_distr::Uniform;
 use ndarray_rand::RandomExt;
 use sprs::TriMat;
 use std::time::Instant;
 
 fn main() {
-    let n = 5000;
+    let n = 10000;
     let mut rng = rand::thread_rng();
 
     // Initialize matrices
-    let activation_in = Array2::random_using((1, n), Uniform::new(-1.0, 1.0), &mut rng);
+    let mut activation_in = Array::random_using(n, Uniform::new(-1.0, 1.0), &mut rng); //n activations
     let weights = Array2::random_using((n, n), Uniform::new(-0.01, 0.01), &mut rng);
 
     // Measure naive loop algorithm
     let naive_now = Instant::now();
-    let mut activation_out = Array2::<f64>::zeros((1, n));
+    let mut activation_out = vec![0.0;n]; //n activations
     for i in 0..n {
         for j in 0..n {
-            activation_out[[0, j]] += activation_in[[0, i]] * weights[[i, j]];
+            activation_out[j] += activation_in[i] * weights[[i, j]];
         }
     }
     println!("Elapsed: {:.2?}, Naive Loop Algorithm", naive_now.elapsed());
 
     // Measure naive loop algorithm with skipping logic
     let klutzy_now = Instant::now();
-    let mut activation_out = Array2::<f64>::zeros((1, n));
+    let mut activation_out = vec![0.0;n]; //n activations
     for i in 0..n {
-        if activation_in[[0, i]] > 0.0 {
+        if activation_in[i] > 0.0 {
             for j in 0..n {
-                activation_out[[0, j]] += activation_in[[0, i]] * weights[[i, j]];
+                activation_out[j] += activation_in[i] * weights[[i, j]];
             }
         }
     }
@@ -57,11 +57,24 @@ fn main() {
     let relu_activation_in = activation_in.mapv(|a| if a < 0.0 { 0.0 } else { a });
     let mut sparse_activation_out = vec![0.0; n];
     for i in 0..n {
-        if activation_in[[0, i]] > 0.0 {
+        if activation_in[i] > 0.0 {
             for (j, &val) in sparse_weights.outer_view(i).unwrap().iter() {
-                sparse_activation_out[j] += relu_activation_in[[0, i]] * val;
+                sparse_activation_out[j] += relu_activation_in[i] * val;
             }
         }
     }
     println!("Elapsed: {:.2?}, Sparse Matrix Algorithm", sparse_now.elapsed());
+
+    // Klutzy/CurdledMilk's second algorithm
+    let now2 = Instant::now();
+    let mut activation_out = vec![0.0;n]; //n activations
+    for i in 0..n{ //for every activation
+        if activation_in[i] > 0.0{
+            for j in 0..n{ //for every output activation of this hidden layer
+                activation_out[j] += activation_in[i] * weights[[i, j]];
+            }
+        }
+    }
+    let elapsed2 = now2.elapsed();
+    println!("Elapsed: {:.2?}, THIS IS my old ALGO before some guy ruined it", elapsed2);
 }
