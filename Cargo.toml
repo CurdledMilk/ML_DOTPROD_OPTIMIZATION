@@ -5,7 +5,8 @@ edition = "2021"
 
 [dependencies]
 ndarray = "*"
-ndarray-rand = "*"
 rand = "*"
 rand_distr = "*"
 sprs = "*"
+rayon = "*"
+packed_simd = "*"
