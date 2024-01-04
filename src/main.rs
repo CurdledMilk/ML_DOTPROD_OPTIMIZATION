@@ -68,6 +68,22 @@ fn checked_dot_product_loop(activation_in: &Vec<f64>, weights: &Vec<Vec<f64>>, n
     return activation_out;
 }
 
+fn generous_checked_dot_product_loop(activation_in: &[f64], flattened_weights: &Vec<f64>, n: usize) -> Vec<f64> {
+    let mut activation_out = vec![0.0; n]; // n activations
+
+    for i in 0..n {
+        if activation_in[i] > 0.0 {
+            for j in 0..n {
+                // Calculate the index for the weights matrix stored in a single Vec
+                let index = i * n + j;
+                activation_out[j] += activation_in[i] * flattened_weights[index];
+            }
+        }
+    }
+
+    activation_out
+}
+
 fn double_checked_dot_product_loop(activation_in: &Vec<f64>, weights: &Vec<Vec<f64>>, n: usize) -> Vec<f64> {
     let mut activation_out = vec![0.0; n]; //n activations
     for i in 0..n {
@@ -196,6 +212,7 @@ fn run_with_config(
     let duration = start.elapsed();
 
     let csr_weights = convert_to_sparse_matrix(&weights, n);
+    let flattened_weights: Vec<_> = weights.clone().into_iter().flat_map(|row| row.into_iter()).collect();
 
     let vectorized_activation_in = Array1::from_vec(activation_in.clone());
     let vectorized_weights_matrix = convert_to_array2(&weights);
@@ -216,7 +233,10 @@ fn run_with_config(
     println!("Basic loop: {:?}", duration);
 
     let (_dot_product_out, duration) = time_algorithm(|| checked_dot_product_loop(&relu(&activation_in), &weights, n));
-    println!("Loop with check (CurdledMilk's Implementation): {:?}", duration);
+    println!("Loop with check: {:?}", duration);
+
+    let (_dot_product_out, duration) = time_algorithm(|| generous_checked_dot_product_loop(&relu(&activation_in), &flattened_weights, n));
+    println!("Generous flattened weights loop with check (CurdledMilk's Implementation): {:?}", duration);
 
     let (_dot_product_out, duration) = time_algorithm(|| double_checked_dot_product_loop(&relu(&activation_in), &weights, n));
     println!("Double checked loop: {:?}", duration);
